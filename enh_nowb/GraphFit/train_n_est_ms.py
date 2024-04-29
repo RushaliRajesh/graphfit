@@ -1,7 +1,7 @@
 from __future__ import print_function
 import os
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
-os.environ["CUDA_VISIBLE_DEVICES"] = "2,3"
+os.environ["CUDA_VISIBLE_DEVICES"] = "0,1"
 
 import argparse
 import os
@@ -36,7 +36,7 @@ def parse_arguments():
     parser.add_argument('--arch', type=str, default='simple', help='arcitecture name:  "simple"')
     parser.add_argument('--desc', type=str, default='My training run for multi-scale normal estimation.', help='description')
     parser.add_argument('--indir', type=str, default='/media/ashish/zoneD/AdaFit/data/pcpnet', help='input folder (point clouds)')
-    parser.add_argument('--logdir', type=str, default='./graphfit_enh_wb/', help='training log folder')
+    parser.add_argument('--logdir', type=str, default='./log/', help='training log folder')
     parser.add_argument('--trainset', type=str, default='trainingset_whitenoise.txt', help='training set file name')
     parser.add_argument('--testset', type=str, default='validationset_no_noise.txt', help='test set file name')
     parser.add_argument('--saveinterval', type=int, default='50', help='save model each n epochs')
@@ -51,7 +51,7 @@ def parse_arguments():
     parser.add_argument('--nepoch', type=int, default=600, help='number of epochs to train for')
     parser.add_argument('--optimizer', type=str, default='adam', help='optimizer adam / SGD / rmsprop')
     parser.add_argument('--opt_eps', type=float, default=1e-08, help='optimizer epsilon')
-    parser.add_argument('--batchSize', type=int, default=128, help='input batch size')
+    parser.add_argument('--batchSize', type=int, default=256, help='input batch size')
     parser.add_argument('--patch_radius', type=float, default=[0.05], nargs='+', help='patch radius in multiples of the shape\'s bounding box diagonal, multiple values for multi-scale.')
     parser.add_argument('--patch_center', type=str, default='point', help='center patch at...\n'
                         'point: center point\n'
@@ -87,15 +87,14 @@ def parse_arguments():
     parser.add_argument('--use_pca', type=int, default=True, help='use pca on point clouds, must be true for jet fit type')
     parser.add_argument('--n_gaussians', type=int, default=1, help='use feature spatial transformer')
 
-    parser.add_argument('--jet_order', type=int, default=5, help='jet polynomial fit order')
-    parser.add_argument('--points_per_patch', type=int, default=128, help='max. number of points per patch')
+    parser.add_argument('--jet_order', type=int, default=3, help='jet polynomial fit order')
+    parser.add_argument('--points_per_patch', type=int, default=250, help='max. number of points per patch')
     parser.add_argument('--neighbor_search', type=str, default='k', help='[k | r] for k nearest and radius')
     parser.add_argument('--weight_mode', type=str, default="sigmoid", help='which function to use on the weight output: softmax, tanh, sigmoid')
     parser.add_argument('--use_consistency', type=int, default=True, help='flag to use consistency loss')
     parser.add_argument('--con_reg', type=str, default='log', help='choose consistency regularizer: mean, uniform')
     parser.add_argument('--k1', type=int, default=40, help='choose k1')
     parser.add_argument('--k2', type=int, default=20, help='choose k2')
-    parser.add_argument('--learn_n', type=bool, default=True, help='to learn poly degree')
     return parser.parse_args()
 
 
@@ -225,16 +224,14 @@ def train_pcpnet(opt):
             # n_effective_points = data[-1].squeeze()
 
             points = points.transpose(2, 1)
-            points = points.cuda()
+            points = points.to(device)
             # data_trans = data_trans.to(device)
-            target = tuple(t.cuda() for t in target)
+            target = tuple(t.to(device) for t in target)
 
             # zero gradients
             optimizer.zero_grad()
 
             # forward pass
-            print("in loop points:",points.shape)
-            # import pdb; pdb.set_trace()
             pred, beta_pred, weights, trans, trans2, neighbor_normals = model(points)
 
             loss, reg_trans, reg_weights, _, consistency_loss, normal_loss = compute_loss(
@@ -286,10 +283,10 @@ def train_pcpnet(opt):
                 data_trans = data[-2]
 
                 points = points.transpose(2, 1)
-                points = points.cuda()
-                data_trans = data_trans.cuda()
+                points = points.to(device)
+                data_trans = data_trans.to(device)
 
-                target = tuple(t.cuda() for t in target)
+                target = tuple(t.to(device) for t in target)
 
                 # forward pass
                 with torch.no_grad():
@@ -576,8 +573,7 @@ def get_model(opt, log_dirname):
                                             use_point_stn=opt.use_point_stn, use_feat_stn=opt.use_feat_stn,
                                             point_tuple=opt.point_tuple, sym_op=opt.sym_op,
                                             jet_order=opt.jet_order,
-                                            weight_mode=opt.weight_mode, use_consistency=opt.use_consistency, 
-                                            k1=opt.k1, k2=opt.k2,learn_n = opt.learn_n).cuda()
+                                            weight_mode=opt.weight_mode, use_consistency=opt.use_consistency, k1=opt.k1, k2=opt.k2).cuda()
     else:
         raise ValueError('Unsupported architecture type')
     os.system('cp %s %s' % (
