@@ -11,7 +11,7 @@ import importlib.util
 import time
 import os
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
-os.environ["CUDA_VISIBLE_DEVICES"] = "0,1"
+os.environ["CUDA_VISIBLE_DEVICES"] = "2,3"
 
 from pathlib import Path
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -28,8 +28,8 @@ def parse_arguments():
     parser.add_argument('--indir', type=str, default='/media/ashish/zoneD/AdaFit/data/pcpnet', help='input folder (point clouds)')
     parser.add_argument('--testset', type=str, default='testset_all.txt', help='shape set file name')
     parser.add_argument('--models', type=str, default='GraphFit', help='names of trained models, can evaluate multiple models')
-    parser.add_argument('--modelpostfix', type=str, default='_model_599.pth', help='model file postfix')
-    parser.add_argument('--logdir', type=str, default='./graphfit_enh_wb/', help='model folder')
+    parser.add_argument('--modelpostfix', type=str, default='_model_360.pth', help='model file postfix')
+    parser.add_argument('--logdir', type=str, default='./cor_mh/', help='model folder')
     parser.add_argument('--parmpostfix', type=str, default='_params.pth', help='parameter file postfix')
     parser.add_argument("--gpu_idx", default="0,1", type=lambda x: list(map(int, x.split(','))),
                         help="Names of the devices comma separated.")
@@ -77,7 +77,9 @@ def test_n_est(opt):
             trainopt.arch = 'simple'
 
     if opt.batchSize == 0:
-        opt.batchSize = trainopt.batchSize
+        # opt.batchSize = trainopt.batchSize
+        print(trainopt.batchSize)
+        opt.batchSize = 50
 
         # get indices in targets and predictions corresponding to each output
         target_features, output_target_ind, output_pred_ind, output_loss_weight, pred_dim = get_target_features((trainopt))
@@ -189,6 +191,7 @@ def get_data_loaders(opt, trainopt, target_features):
         model_batchSize = trainopt.batchSize
     else:
         model_batchSize = opt.batchSize
+        print('Using training batch size:', model_batchSize)
 
     test_dataset = PointcloudPatchDataset(
         root=opt.indir,

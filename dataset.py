@@ -39,8 +39,11 @@ class SequentialPointcloudPatchSampler(data.sampler.Sampler):
         self.total_patch_count = None
 
         self.total_patch_count = 0
+        # print("****************")
+        # print(self.data_source.shape_patch_count)
         for shape_ind, _ in enumerate(self.data_source.shape_names):
             self.total_patch_count = self.total_patch_count + self.data_source.shape_patch_count[shape_ind]
+        # print("sum: ", self.total_patch_count)
 
     def __iter__(self):
         return iter(range(self.total_patch_count))
