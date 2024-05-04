@@ -28,8 +28,8 @@ def parse_arguments():
     parser.add_argument('--indir', type=str, default='/media/ashish/zoneD/AdaFit/data/pcpnet', help='input folder (point clouds)')
     parser.add_argument('--testset', type=str, default='testset_all.txt', help='shape set file name')
     parser.add_argument('--models', type=str, default='GraphFit', help='names of trained models, can evaluate multiple models')
-    parser.add_argument('--modelpostfix', type=str, default='_model_360.pth', help='model file postfix')
-    parser.add_argument('--logdir', type=str, default='./cor_mh/', help='model folder')
+    parser.add_argument('--modelpostfix', type=str, default='_model_450.pth', help='model file postfix')
+    parser.add_argument('--logdir', type=str, default='./gat_based/', help='model folder')
     parser.add_argument('--parmpostfix', type=str, default='_params.pth', help='parameter file postfix')
     parser.add_argument("--gpu_idx", default="0,1", type=lambda x: list(map(int, x.split(','))),
                         help="Names of the devices comma separated.")
@@ -62,7 +62,7 @@ def test_n_est(opt):
         model_log_dir =  os.path.join(opt.logdir, model_name, 'trained_models')
         model_filename = os.path.join(model_log_dir, model_name+opt.modelpostfix)
         param_filename = os.path.join(model_log_dir, model_name+opt.parmpostfix)
-        output_dir = os.path.join(opt.logdir, model_name, 'results_599')
+        output_dir = os.path.join(opt.logdir, model_name, 'results_450')
         if not os.path.exists(output_dir):
             os.makedirs(output_dir)
 

@@ -1,7 +1,7 @@
 from __future__ import print_function
 import os
 os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
-os.environ["CUDA_VISIBLE_DEVICES"] = "0,1"
+os.environ["CUDA_VISIBLE_DEVICES"] = "2,3"
 
 import argparse
 import os
@@ -36,7 +36,7 @@ def parse_arguments():
     parser.add_argument('--arch', type=str, default='simple', help='arcitecture name:  "simple"')
     parser.add_argument('--desc', type=str, default='My training run for multi-scale normal estimation.', help='description')
     parser.add_argument('--indir', type=str, default='/media/ashish/zoneD/AdaFit/data/pcpnet', help='input folder (point clouds)')
-    parser.add_argument('--logdir', type=str, default='./sa_crossatn/', help='training log folder')
+    parser.add_argument('--logdir', type=str, default='./g/', help='training log folder')
     parser.add_argument('--trainset', type=str, default='trainingset_whitenoise.txt', help='training set file name')
     parser.add_argument('--testset', type=str, default='validationset_no_noise.txt', help='test set file name')
     parser.add_argument('--saveinterval', type=int, default='50', help='save model each n epochs')
@@ -54,7 +54,7 @@ def parse_arguments():
     parser.add_argument('--batchSize', type=int, default=128, help='input batch size')
     parser.add_argument('--patch_radius', type=float, default=[0.05], nargs='+', help='patch radius in multiples of the shape\'s bounding box diagonal, multiple values for multi-scale.')
     parser.add_argument('--patch_center', type=str, default='point', help='center patch at...\n'
-                        'point: center point\n'
+                        'point: center point\n' 
                         'mean: patch mean')
     parser.add_argument('--patch_point_count_std', type=float, default=0, help='standard deviation of the number of points in a patch')
     parser.add_argument('--patches_per_shape', type=int, default=1000, help='number of patches sampled from each shape in an epoch')
@@ -93,7 +93,7 @@ def parse_arguments():
     parser.add_argument('--weight_mode', type=str, default="sigmoid", help='which function to use on the weight output: softmax, tanh, sigmoid')
     parser.add_argument('--use_consistency', type=int, default=True, help='flag to use consistency loss')
     parser.add_argument('--con_reg', type=str, default='log', help='choose consistency regularizer: mean, uniform')
-    parser.add_argument('--k1', type=int, default=40, help='choose k1')
+    parser.add_argument('--k1', type=int, default=40, help='choose k1') 
     parser.add_argument('--k2', type=int, default=20, help='choose k2')
     parser.add_argument('--learn_n', type=bool, default=True, help='to learn poly degree')
     return parser.parse_args()
@@ -138,7 +138,7 @@ def train_pcpnet(opt):
     model = get_model(opt, log_dirname)
 
 
-    os.system('cp train_n_est_ms.py %s' % (log_dirname))
+    os.system('cp train_multiple.py %s' % (log_dirname))
 
     if opt.refine:
         refine_model_filename = os.path.join(out_dir, '{}_model_{}.pth' .format(opt.name, opt.refine_epoch))
@@ -182,11 +182,12 @@ def train_pcpnet(opt):
         scheduler = lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=20,
                                                verbose=False, threshold=0.0001, threshold_mode='rel',
                                                cooldown=5, min_lr=1e-012, eps=1e-08)
-    if opt.multi_gpu:
+    if opt.multi_gpu==1:
         # model = torch.nn.DataParallel(model,device_ids=opt.gpu_idx)
         model = torch.nn.DataParallel(model).cuda()
     
-    # model.cuda()
+    else: 
+        model.cuda()
 
     # model.to(device)
 
@@ -332,10 +333,10 @@ def train_pcpnet(opt):
 
         avg_test_loss = avg_test_loss / test_num_batch
         # update learning rate
-        if opt.scheduler_type == 'step':
-            scheduler.step()
-        else:
-            scheduler.step(avg_test_loss)
+        # if opt.scheduler_type == 'step':
+        #     scheduler.step()
+        # else:
+        #     scheduler.step(avg_test_loss)
         test_writer.add_scalar('avg_loss', avg_test_loss,
                                (epoch + test_fraction_done) * train_num_batch * opt.batchSize)
 
